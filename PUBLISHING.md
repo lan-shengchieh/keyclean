@@ -59,6 +59,19 @@ brew style lan-shengchieh/tap/keyclean
 
 Commit the tap update as `keyclean <version>` and push it.
 
+## GitHub repository presentation
+
+Keep the repository metadata aligned with the README:
+
+- Description: `Lock your Mac keyboard while cleaning it—without disabling the trackpad.`
+- Topics: `macos`, `swift`, `cli`, `keyboard`, `utility`, `homebrew`, `macbook`,
+  `accessibility`, `privacy`
+- Social preview: upload `.github/social-preview.jpg` under
+  **Settings → General → Social preview**.
+
+The checked-in social preview is 1280 × 640 and under 1 MB, matching GitHub's
+recommended dimensions and upload limit.
+
 ## Homebrew/core readiness
 
 Do not open a `homebrew/core` pull request until the project satisfies the
