@@ -89,6 +89,9 @@ trackpad. Exiting the process removes the event tap.
 Bug reports, compatibility results, and focused pull requests are welcome. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the local test commands.
 
+Tested `keyclean` on another macOS version, Mac architecture, or terminal app?
+[Share a compatibility report](https://github.com/lan-shengchieh/keyclean/issues/new?template=compatibility_report.yml).
+
 If `keyclean` saves you from an accidental key press, sharing the project helps
 other Mac users find it.
 

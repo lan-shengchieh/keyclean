@@ -1,0 +1,87 @@
+name: Compatibility report
+description: Share a successful test or compatibility problem from your Mac
+title: "[Compatibility]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping test keyclean on more Mac and terminal combinations.
+        Keep the trackpad available while testing, and do not include private text.
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: macOS 15.6
+    validations:
+      required: true
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Mac architecture
+      options:
+        - Apple Silicon
+        - Intel
+    validations:
+      required: true
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal application and version
+      placeholder: Terminal 2.15, iTerm2 3.5, Ghostty 1.2, etc.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: keyclean version
+      description: Run `keyclean --version`.
+      placeholder: keyclean 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: keys
+    attributes:
+      label: Were ordinary keys and modifiers blocked?
+      options:
+        - Yes
+        - Partially
+        - No
+        - Not tested
+    validations:
+      required: true
+  - type: dropdown
+    id: pointer
+    attributes:
+      label: Did the trackpad or mouse remain available?
+      options:
+        - Yes
+        - No
+        - Not tested
+    validations:
+      required: true
+  - type: dropdown
+    id: unlock
+    attributes:
+      label: Did Control + Option + Command + U unlock and exit?
+      options:
+        - Yes
+        - No
+        - Not tested
+    validations:
+      required: true
+  - type: textarea
+    id: system-keys
+    attributes:
+      label: Media/system key results
+      description: Optional. Note which keys you tested and what happened.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed private text and sensitive information from this report.
+          required: true

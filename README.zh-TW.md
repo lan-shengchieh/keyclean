@@ -88,6 +88,9 @@ make install
 歡迎回報錯誤、提供不同 macOS 版本的相容性結果，或送出範圍明確的
 pull request。本機測試指令請參考 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
+如果你在不同 macOS 版本、Mac 架構或終端機上測試過 `keyclean`，歡迎
+[提交相容性報告](https://github.com/lan-shengchieh/keyclean/issues/new?template=compatibility_report.yml)。
+
 如果 `keyclean` 對你有幫助，也歡迎分享給其他 Mac 使用者。
 
 ## 授權
