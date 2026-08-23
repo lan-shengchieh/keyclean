@@ -6,6 +6,8 @@
 
 [繁體中文](README.zh-TW.md)
 
+![keyclean — Lock the keys. Keep the trackpad.](.github/social-preview.jpg)
+
 Lock the keyboard. Keep the trackpad. Clean your MacBook without accidental keystrokes.
 
 `keyclean` is a tiny, open-source macOS command-line utility. It temporarily

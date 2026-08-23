@@ -6,6 +6,8 @@
 
 [English](README.md)
 
+![keyclean — Lock the keys. Keep the trackpad.](.github/social-preview.jpg)
+
 鎖住鍵盤、保留觸控板，清潔 MacBook 時不再誤觸按鍵。
 
 `keyclean` 是一個小巧、開源的 macOS 命令列工具。執行期間會暫時攔截
