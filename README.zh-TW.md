@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/lan-shengchieh/keyclean/actions/workflows/ci.yml/badge.svg)](https://github.com/lan-shengchieh/keyclean/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/lan-shengchieh/keyclean)](https://github.com/lan-shengchieh/keyclean/releases/latest)
+[![GitHub stars](https://img.shields.io/github/stars/lan-shengchieh/keyclean?style=flat)](https://github.com/lan-shengchieh/keyclean/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [English](README.md)
@@ -13,6 +14,10 @@
 `keyclean` 是一個小巧、開源的 macOS 命令列工具。執行期間會暫時攔截
 鍵盤輸入，但仍可使用觸控板與滑鼠；按下解鎖快捷鍵或結束程式後，鍵盤
 就會恢復正常。
+
+不同於全螢幕清潔模式，`keyclean` 適合清潔鍵盤時仍想操作游標的人：它
+只在需要時從終端機啟動，不安裝背景服務，而且只有一個可直接檢查的
+Swift 原始碼檔。
 
 ## 安裝
 
@@ -57,6 +62,9 @@ Touch ID 與實體電源鍵不在本工具的保證範圍內。
 - 程序結束時，鍵盤輸入會自動恢復。
 - 透過 GitHub Actions 在 macOS 上建置與測試。
 
+想了解 event tap、權限、隱私界線與復原方式，可閱讀
+[keyclean 的運作原理](docs/how-keyclean-works.zh-TW.md)。
+
 ## 從原始碼建置
 
 需求：macOS，以及包含 Swift 的 Apple Command Line Tools。
@@ -94,6 +102,13 @@ pull request。本機測試指令請參考 [CONTRIBUTING.md](CONTRIBUTING.md)。
 [提交相容性報告](https://github.com/lan-shengchieh/keyclean/issues/new?template=compatibility_report.yml)。
 
 如果 `keyclean` 對你有幫助，也歡迎分享給其他 Mac 使用者。
+
+- 如果你想追蹤正式進入 Homebrew 的進度，可以
+  [Star 這個 repository](https://github.com/lan-shengchieh/keyclean)。
+- 將一行安裝指令分享給可能需要的 Mac 使用者。
+- 使用 [launch kit](SHARE.md) 裡已準備好的中英文文案與圖片。
+
+相容性測試與 `homebrew/core` 里程碑請見公開的 [roadmap](ROADMAP.md)。
 
 ## 授權
 

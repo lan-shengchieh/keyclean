@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/lan-shengchieh/keyclean/actions/workflows/ci.yml/badge.svg)](https://github.com/lan-shengchieh/keyclean/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/lan-shengchieh/keyclean)](https://github.com/lan-shengchieh/keyclean/releases/latest)
+[![GitHub stars](https://img.shields.io/github/stars/lan-shengchieh/keyclean?style=flat)](https://github.com/lan-shengchieh/keyclean/stargazers)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [繁體中文](README.zh-TW.md)
@@ -13,6 +14,10 @@ Lock the keyboard. Keep the trackpad. Clean your MacBook without accidental keys
 `keyclean` is a tiny, open-source macOS command-line utility. It temporarily
 swallows keyboard input while leaving the trackpad and mouse available, then
 restores normal input when you press the unlock shortcut or exit the process.
+
+Unlike a full-screen cleaning mode, `keyclean` is designed for people who want
+to keep using the pointer: it runs on demand from Terminal, does not install a
+background service, and consists of one auditable Swift source file.
 
 ## Install
 
@@ -58,6 +63,9 @@ Touch ID and the physical power button are outside the guarantee of this tool.
 - Keyboard input returns automatically when the process exits.
 - Source builds and tests on GitHub Actions for macOS.
 
+Read [how keyclean works](docs/how-keyclean-works.md) for the event-tap flow,
+permission model, privacy boundaries, and recovery paths.
+
 ## Build from source
 
 Requirements: macOS and Apple Command Line Tools with Swift.
@@ -95,7 +103,15 @@ Tested `keyclean` on another macOS version, Mac architecture, or terminal app?
 [Share a compatibility report](https://github.com/lan-shengchieh/keyclean/issues/new?template=compatibility_report.yml).
 
 If `keyclean` saves you from an accidental key press, sharing the project helps
-other Mac users find it.
+other Mac users find it. You can also:
+
+- [Star the repository](https://github.com/lan-shengchieh/keyclean) if you want
+  to follow its progress toward official Homebrew distribution.
+- Send the one-line install command to a Mac user who might find it useful.
+- Use the ready-made copy and images in the [launch kit](SHARE.md).
+
+See the public [roadmap](ROADMAP.md) for compatibility testing and
+`homebrew/core` milestones.
 
 ## License
 
