@@ -8,21 +8,38 @@ Maintainer checklist for releases and the Homebrew tap.
 
 ## Prepare a release
 
-1. Update `appVersion` in `keyclean.swift`.
-2. Update user-facing documentation when behavior changes.
-3. Run the local checks:
+1. Keep the version synchronized in `KeyCleanMetadata.version` and both
+   Info.plist resources; increment `CFBundleVersion` in both resources for every
+   published bundle.
+2. Update user-facing documentation when behavior or permission boundaries
+   change.
+3. Run the non-interactive checks:
 
    ```sh
    make clean
    make test
-   ./keyclean
+   make cross-build
    ```
 
-4. Commit and push the release preparation.
-5. Create an annotated, immutable version tag:
+4. Build the exact free distribution layout and test both interactive modes:
 
    ```sh
-   VERSION="0.1.1"
+   make bundle
+   build/layout/bin/keyclean --safe
+   build/layout/bin/keyclean --full
+   ```
+
+   Confirm on clean macOS 13, 15, and 26 test systems that Safe Mode requests no
+   privacy permission; Full Lock lists KeyClean Full Lock rather than the
+   terminal; unlock, process termination, display changes, and
+   `--revoke-full-access` all restore input safely. Do not substitute a day-to-day
+   development machine for clean TCC state.
+
+5. Commit and push the release preparation.
+6. Create an annotated, immutable version tag:
+
+   ```sh
+   VERSION="0.2.0"
    git tag -a "v${VERSION}" -m "keyclean v${VERSION}"
    git push origin main "v${VERSION}"
    gh release create "v${VERSION}" \
@@ -38,7 +55,7 @@ as a possible supply-chain compromise.
 Calculate the checksum of the exact tagged archive:
 
 ```sh
-VERSION="0.1.1"
+VERSION="0.2.0"
 ARCHIVE="/tmp/keyclean-${VERSION}.tar.gz"
 
 curl -L \
@@ -47,7 +64,9 @@ curl -L \
 shasum -a 256 "${ARCHIVE}"
 ```
 
-In `lan-shengchieh/homebrew-tap`, update the Formula URL and SHA-256, then run:
+In `lan-shengchieh/homebrew-tap`, update the Formula URL and SHA-256. Remove the
+temporary v0.1 source-compatibility branch once stable points at v0.2.0, then
+run:
 
 ```sh
 brew update
@@ -56,6 +75,11 @@ brew test lan-shengchieh/tap/keyclean
 brew audit --strict --formula lan-shengchieh/tap/keyclean
 brew style lan-shengchieh/tap/keyclean
 ```
+
+Verify the installed keg contains `bin/keyclean`, `libexec/KeyClean.app`, and
+`libexec/KeyCleanFull.app`; both bundles must pass `codesign --verify --deep
+--strict`. The free release is ad-hoc signed and not notarized, so release notes
+must not claim publisher authentication or OS-enforced network isolation.
 
 Commit the tap update as `keyclean <version>` and push it.
 
@@ -72,29 +96,24 @@ Keep the repository metadata aligned with the README:
 The checked-in social preview is 1280 × 640 and under 1 MB, matching GitHub's
 recommended dimensions and upload limit.
 
-## Homebrew/core readiness
+## Official Homebrew repository eligibility
 
-Do not open a `homebrew/core` pull request until the project satisfies the
-current official policies:
+The third-party tap is the supported Homebrew distribution route. Do not open a
+`homebrew/core` pull request for the current Formula: KeyClean's usable product
+includes native `.app` bundles, and Homebrew's current Formula policy directs
+native macOS applications toward Casks. An official Cask would instead require
+an upstream prebuilt artifact that satisfies the current Cask and Gatekeeper
+rules, which the source-built, ad-hoc-signed release deliberately does not
+provide.
+
+Re-evaluate the package type and live policies before proposing official
+distribution:
 
 - [Package Acceptance Policy](https://docs.brew.sh/Package-Acceptance-Policy)
 - [Acceptable Formulae](https://docs.brew.sh/Acceptable-Formulae)
-- [Formula Cookbook](https://docs.brew.sh/Formula-Cookbook)
+- [Acceptable Casks](https://docs.brew.sh/Acceptable-Casks)
 
-Because a pull request from the upstream repository owner is a self-submission,
-the normal notability threshold is at least 90 forks, 90 watchers, or 225 stars.
-A repository less than 30 days old is normally not eligible. Recheck the live
-policy before submitting because these requirements can change.
-
-For a new core Formula, run the stricter validation immediately before opening
-the pull request:
-
-```sh
-HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source keyclean
-brew test keyclean
-brew audit --new --strict --formula keyclean
-brew style keyclean
-```
-
-Homebrew requires disclosure when AI/LLM assistance was used on the submission.
-Review the current contribution policy and answer maintainer questions yourself.
+Repository age and notability are additional requirements, not a way around the
+package-type issue. A self-submission normally needs at least 90 forks, 90
+watchers, or 225 stars, and repositories less than 30 days old are normally not
+eligible. These thresholds can change.

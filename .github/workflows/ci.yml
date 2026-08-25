@@ -8,17 +8,26 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel, macos-26]
+
+    runs-on: ${{ matrix.os }}
 
     permissions:
       contents: read
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Show Swift version
         run: swiftc --version
 
       - name: Build and test non-interactive commands
         run: make test
+
+      - name: Cross-build for Apple Silicon and Intel
+        if: matrix.os == 'macos-26'
+        run: make cross-build

@@ -1,70 +1,114 @@
-# How keyclean locks a Mac keyboard without disabling the trackpad
+# How KeyClean blocks input without granting Accessibility to your terminal
 
-`keyclean` is a one-file Swift command-line utility for temporarily locking a
-Mac keyboard while it is being cleaned. It uses a macOS Core Graphics event tap
-instead of a kernel extension, device driver, login item, or background service.
+KeyClean 0.2 separates a permission-free foreground cleaning mode from an
+opt-in system-wide lock. Both are launched by a small CLI through macOS
+LaunchServices and terminate completely after unlocking.
 
-## The event flow
+## Process layout
 
-1. `keyclean` creates a session-level `CGEventTap` at the head of the event-tap
-   chain.
-2. The event mask includes ordinary key presses, key releases, modifier changes,
-   and system-defined keyboard events such as the media keys visible at this
-   layer.
-3. The callback returns `nil` for those events, which prevents them from
-   continuing to the active application.
-4. `Control + Option + Command + U` stops the run loop instead of being passed
-   through.
-5. The process disables and removes its event tap before exiting. macOS also
-   removes the tap automatically if the process is terminated.
+The reproducible free build installs three components:
 
-The complete implementation is in [keyclean.swift](../keyclean.swift).
+```text
+Terminal (no Accessibility)
+  └─ keyclean CLI (no Accessibility)
+       ├─ Safe Mode → KeyClean.app (no TCC permission)
+       └─ Full Lock → KeyCleanFull.app (Accessibility, if granted)
+```
 
-## Why the trackpad keeps working
+The CLI calls `NSWorkspace.openApplication` instead of executing an app binary
+as a terminal child. This gives macOS an application bundle to identify as the
+responsible code for privacy decisions. The CLI waits for that application to
+exit so the terminal workflow remains `keyclean` → clean → unlock → prompt.
 
-The event mask deliberately excludes mouse, cursor, scrolling, and gesture
-events. `keyclean` never seizes a pointing device, so the trackpad or mouse can
-still move the pointer and close the Terminal window if needed.
+Only one process with either KeyClean bundle identifier may run at a time.
 
-That is the project's main tradeoff: it is a focused keyboard-cleaning CLI, not
-a full-screen mode that disables every input device.
+## Safe Mode event flow
 
-## Why Accessibility permission is required
+1. `KeyClean.app` activates and creates a borderless overlay for every
+   `NSScreen`.
+2. App presentation options hide the Dock and menu bar and disable application
+   switching, Hide, the Apple menu, and the Force Quit panel while KeyClean is
+   active.
+3. A local `NSEvent` monitor receives keyboard events dispatched to KeyClean.
+4. The monitor recognizes `⌃⌥⌘U`, then returns `nil` for key-down, key-up,
+   modifier, and visible system-defined events.
+5. Clicking Unlock or pressing the shortcut removes the monitor, restores the
+   previous presentation options, closes every overlay, and exits.
 
-macOS protects event taps that can suppress user input. The terminal application
-that launches `keyclean` therefore needs Accessibility permission. `keyclean`
-does not require `sudo`, administrator privileges, Input Monitoring permission,
-or a persistent helper.
+This needs no Accessibility or Input Monitoring permission because it modifies
+only events delivered to KeyClean itself. That is also its boundary: macOS may
+handle certain media keys, Touch ID, or the power button before an application
+can cancel them.
 
-## Privacy and security boundaries
+Safe Mode listens for display-topology changes and reconciles its overlay set.
+If KeyClean loses application focus, it exits immediately rather than claiming
+to protect events it can no longer consume.
 
-- The callback does not convert key codes into text or store input.
-- There is no network code, analytics, configuration file, or background process.
-- `keyclean` is not a login lock, security boundary, or parental-control tool.
-- Touch ID and the physical power button are handled below the event-tap layer
-  and are outside its guarantee.
-- If macOS disables a slow event tap, `keyclean` re-enables it before continuing.
+## Full Lock event flow
 
-Because the source is a single file with no third-party dependencies, users can
-inspect the entire input-handling path before building it.
+1. `KeyCleanFull.app` checks `AXIsProcessTrusted()`.
+2. When access is missing, the normal-level permission panel offers Open System
+   Settings and Cancel. Opening Settings moves the panel behind it so the
+   permission controls remain usable.
+3. KeyClean observes `NSApplication.didBecomeActiveNotification`. Returning
+   from System Settings triggers another `AXIsProcessTrusted()` check and starts
+   Full Lock automatically after approval; macOS exposes no public TCC-change
+   callback for this permission.
+4. After approval, the app creates a session-level `CGEventTap` at the head of
+   the tap chain with `CGEventTapOptions.defaultTap`.
+5. The callback returns `nil` for keyboard, modifier, and visible system-defined
+   events. It recognizes `⌃⌥⌘U` before discarding the event.
+6. A small floating panel remains mouse-accessible. Unlocking disables and
+   invalidates the tap, removes its run-loop source, closes the panel, and exits.
+
+Pointer events are deliberately absent from the event mask. If macOS disables a
+slow tap, the callback re-enables it. Terminating the process also causes macOS
+to remove the tap.
+
+## Why the modes use different apps
+
+An active event filter can discard input but needs macOS Accessibility. A
+listen-only event tap can use the narrower Input Monitoring permission, but it
+cannot implement keyboard suppression.
+
+Accessibility grants broader input capabilities than KeyClean needs. macOS does
+not expose a public keyboard-suppression-only TCC capability. The free build
+therefore isolates that broad permission to `KeyCleanFull.app`; the default Safe
+Mode app and the terminal never receive it.
+
+Run this to revoke KeyClean's Full Lock decisions without touching the
+terminal's permissions:
+
+```sh
+keyclean --revoke-full-access
+```
+
+`keyclean --full-once` uses the same reset immediately after the launched Full
+Lock app terminates. Because the CLI waits through LaunchServices, this also
+covers Cancel and app crashes while the CLI itself remains alive.
+
+The CLI refuses to reset permission while either KeyClean app is running. It
+resets the current Full Lock identifier and the KeyClean identifier used by
+early v0.2 previews. It also clears the preview build's `PostEvent` decision,
+but never resets a terminal application's privacy settings.
+
+## Signing boundary
+
+The Homebrew Formula compiles the immutable tagged source locally. Its default
+split build uses ad-hoc code signatures and Hardened Runtime so assembled code
+is sealed, but an ad-hoc signature has no publisher identity and is not
+notarized.
+
+The split layout is the only supported build. Both apps are signed without
+entitlements and contain no network or file-handling feature, but the operating
+system does not enforce a no-network boundary for this build.
 
 ## Recovery paths
 
-Use any of these methods to restore normal keyboard input:
+- Click **Unlock Keyboard** with the trackpad or mouse.
+- Press `Control + Option + Command + U`.
+- Terminate the active KeyClean app from another session.
+- If Safe Mode loses focus, it restores state and exits automatically.
 
-1. Press `Control + Option + Command + U`.
-2. Use the trackpad or mouse to close the Terminal window running `keyclean`.
-3. Terminate the `keyclean` process from another session.
-
-All three end the process and remove its event tap.
-
-## Build and inspect it yourself
-
-```sh
-git clone https://github.com/lan-shengchieh/keyclean.git
-cd keyclean
-make test
-```
-
-The Homebrew Formula also compiles the tagged Swift source directly rather than
-downloading a prebuilt executable.
+Crashing or killing either app cannot leave an event monitor or event tap
+installed because both mechanisms belong to the terminating process.
