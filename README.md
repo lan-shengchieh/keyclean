@@ -9,15 +9,20 @@
 
 ![keyclean — Lock the keys. Keep the trackpad.](.github/social-preview.jpg)
 
-Lock the keyboard. Keep the trackpad. Clean your MacBook without accidental keystrokes.
+Lock the keyboard. Keep the trackpad. Clean your MacBook without accidental
+keystrokes.
 
-`keyclean` is a tiny, open-source macOS command-line utility. It temporarily
-swallows keyboard input while leaving the trackpad and mouse available, then
-restores normal input when you press the unlock shortcut or exit the process.
+KeyClean 0.2 provides two deliberately different security modes on macOS 13 or
+later:
 
-Unlike a full-screen cleaning mode, `keyclean` is designed for people who want
-to keep using the pointer: it runs on demand from Terminal, does not install a
-background service, and consists of one auditable Swift source file.
+- **Safe Mode** is the default. It covers every display, consumes keyboard
+  events delivered to KeyClean, and requests no Accessibility permission.
+- **Full Lock** is opt-in. It uses an active Core Graphics event tap to suppress
+  keyboard events system-wide. Accessibility belongs to a dedicated KeyClean
+  app, never to Terminal, iTerm2, or another terminal application.
+
+Both modes leave the pointer available and exit completely when you unlock.
+There is no daemon, login item, analytics, network code, or stored input.
 
 ## Install
 
@@ -25,93 +30,167 @@ background service, and consists of one auditable Swift source file.
 brew install lan-shengchieh/tap/keyclean
 ```
 
-Then run:
+Start permission-free Safe Mode:
 
 ```sh
 keyclean
 ```
 
-Unlock with **Control + Option + Command + U** (`⌃⌥⌘U`). You can also close the
-Terminal window with the trackpad; ending the process removes the event tap and
-restores keyboard input.
+The current tap continues to serve v0.1.0 until v0.2.0 is tagged. To test the
+v0.2 source build before that release, use:
 
-## First run
+```sh
+brew install --HEAD lan-shengchieh/tap/keyclean
+```
 
-macOS may ask for Accessibility permission for the terminal app that launches
-`keyclean`:
+## Choose a mode
+
+### Safe Mode — default, no privacy permission
+
+```sh
+keyclean
+# or
+keyclean --safe
+```
+
+Safe Mode places a cleaning overlay on every connected display and keeps
+KeyClean in the foreground. Ordinary keys and common application-switching
+shortcuts cannot reach another app. Use the trackpad or mouse to click
+**Unlock Keyboard**, or press **Control + Option + Command + U** (`⌃⌥⌘U`).
+
+Safe Mode is intentionally a best-effort application-level lock. System-reserved
+media keys, Touch ID, and the physical power button may still take effect.
+
+### Full Lock — opt-in Accessibility
+
+```sh
+keyclean --full
+```
+
+Full Lock suppresses keyboard, modifier, and visible media-key events with an
+active `CGEventTap`. Its small floating panel leaves the trackpad and mouse free
+to interact with other apps.
+
+On first use, click **Open System Settings**, then enable **KeyClean Full
+Lock**—not your terminal—under:
 
 **System Settings → Privacy & Security → Accessibility**
 
-Enable Terminal, iTerm2, or the terminal application you use, then run
-`keyclean` again.
+Return to KeyClean afterward. It rechecks access when it becomes active and
+starts Full Lock automatically; there is no manual retry step.
 
-## What it does
+Accessibility is a broad macOS permission, not a keyboard-suppression-only
+capability. KeyClean cannot make that system permission more granular. Revoke
+only KeyClean's Full Lock permission at any time with:
 
-| Input | While `keyclean` runs |
-| --- | --- |
-| Ordinary keys and modifiers | Blocked |
-| Media/system keys visible to the session event tap | Blocked |
-| Trackpad and mouse | Available |
-| `⌃⌥⌘U` | Unlocks and exits |
+```sh
+keyclean --revoke-full-access
+```
 
-Touch ID and the physical power button are outside the guarantee of this tool.
+For a one-time Full Lock that automatically revokes KeyClean access as soon as
+the session exits, use:
 
-## Small by design
+```sh
+keyclean --full-once
+```
 
-- One Swift source file and no third-party dependencies.
-- No network access, analytics, background service, or stored data.
-- Keyboard input returns automatically when the process exits.
-- Source builds and tests on GitHub Actions for macOS.
+The next Full Lock will require approval again. Automatic revocation also runs
+after Cancel or an app crash, as long as the waiting `keyclean` CLI remains
+running.
 
-Read [how keyclean works](docs/how-keyclean-works.md) for the event-tap flow,
-permission model, privacy boundaries, and recovery paths.
+## Security model
+
+The free, reproducible Homebrew build uses a split layout:
+
+| Component | TCC permission | Purpose |
+| --- | --- | --- |
+| `keyclean` CLI | None | Launches the selected app through LaunchServices |
+| `KeyClean.app` | None | Runs the foreground Safe Mode overlay |
+| `KeyCleanFull.app` | Accessibility, when granted | Runs the system-wide active event tap |
+
+The split ensures that using Full Lock never grants Accessibility to the Safe
+Mode app or to every command launched by your terminal. Only one KeyClean
+session may run at a time, and neither app persists after unlocking.
+
+Homebrew compiles the tagged source locally and applies an ad-hoc code signature
+so macOS can verify that the assembled bundle has not changed after signing.
+Ad-hoc signing does **not** authenticate the publisher or provide notarization.
+The release intentionally ships only this split layout and signs both apps
+without entitlements. It contains no network code, but the operating system does
+not enforce a no-network boundary for this build.
+
+Read [how KeyClean works](docs/how-keyclean-works.md) for event flow, process
+attribution, permission boundaries, and recovery paths.
+
+## Upgrading from v0.1
+
+KeyClean 0.1 asked you to grant Accessibility to the terminal that launched it.
+Version 0.2 no longer needs that terminal permission. If you enabled Terminal,
+iTerm2, Ghostty, Warp, or another terminal only for KeyClean, disable it manually
+in System Settings after upgrading. KeyClean does not revoke terminal permissions
+automatically because other workflows may rely on them.
 
 ## Build from source
 
-Requirements: macOS and Apple Command Line Tools with Swift.
+Requirements: macOS 13 or later and Apple Command Line Tools with Swift 5.7 or
+later.
 
 ```sh
 git clone https://github.com/lan-shengchieh/keyclean.git
 cd keyclean
 make test
+make cross-build
 ```
 
-Install the locally built binary to `~/.local/bin`:
+Install the locally built CLI and apps under `~/.local`:
 
 ```sh
 make install
 ```
 
+`make test` is non-interactive: it runs unit tests, assembles the free split
+bundle, validates both property lists and code signatures, and invokes each app's
+self-test without requesting privacy permission.
+
 ## Troubleshooting
 
-**`could not create the keyboard event tap`**
+**Safe Mode closes immediately**
 
-Grant Accessibility permission to the terminal app that launches `keyclean`,
-quit and reopen that app if needed, then try again.
+Safe Mode must remain the active application to consume events safely. If macOS
+moves focus elsewhere, KeyClean exits instead of pretending the keyboard is
+still locked.
+
+**Full Lock says Accessibility is missing**
+
+Enable KeyClean Full Lock in Accessibility, then return to KeyClean. It will
+recheck automatically. Do not enable your terminal.
+
+**Full Lock is unavailable after permission was granted**
+
+Run `keyclean --revoke-full-access`, start Full Lock again, and re-grant KeyClean
+Full Lock in System Settings. If the active event tap is still unavailable, use
+Safe Mode.
+
+**`--revoke-full-access` reports success but Settings still looks unchanged**
+
+Close and reopen System Settings; TCC can leave its current view stale. If a
+second attempt is needed, run `keyclean --revoke-full-access` again. The command
+resets the current Full Lock identity, the early-v0.2 KeyClean identity, and its
+legacy `PostEvent` decision; it never resets your terminal.
 
 **The keyboard is still locked**
 
-Press `⌃⌥⌘U`. If that does not work, close the Terminal window with the
-trackpad. Exiting the process removes the event tap.
+Click **Unlock Keyboard** or press `⌃⌥⌘U`. Terminating the KeyClean app also
+removes its local monitor or event tap automatically.
 
 ## Contributing
 
 Bug reports, compatibility results, and focused pull requests are welcome. See
-[CONTRIBUTING.md](CONTRIBUTING.md) for the local test commands.
+[CONTRIBUTING.md](CONTRIBUTING.md) for checks and reporting details.
 
-Tested `keyclean` on another macOS version, Mac architecture, or terminal app?
-[Share a compatibility report](https://github.com/lan-shengchieh/keyclean/issues/new?template=compatibility_report.yml).
-
-If `keyclean` saves you from an accidental key press, sharing the project helps
-other Mac users find it. You can also:
-
-- [Star the repository](https://github.com/lan-shengchieh/keyclean) if you want
-  to follow its progress toward official Homebrew distribution.
-- Send the one-line install command to a Mac user who might find it useful.
-- Use the ready-made copy and images in the [launch kit](SHARE.md).
-
-See the public [roadmap](ROADMAP.md) for compatibility testing and
-`homebrew/core` milestones.
+Please include the selected mode, macOS version, Mac architecture, terminal app,
+and whether Accessibility lists KeyClean or the terminal in compatibility
+reports.
 
 ## License
 

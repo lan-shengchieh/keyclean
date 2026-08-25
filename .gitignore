@@ -1,4 +1,4 @@
-keyclean
 .DS_Store
 .swiftpm/
 .build/
+build/

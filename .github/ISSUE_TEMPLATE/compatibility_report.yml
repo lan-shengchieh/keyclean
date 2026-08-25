@@ -30,12 +30,22 @@ body:
       placeholder: Terminal 2.15, iTerm2 3.5, Ghostty 1.2, etc.
     validations:
       required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: KeyClean mode
+      options:
+        - Safe Mode
+        - Full Lock
+        - Full Lock (`--full-once`)
+    validations:
+      required: true
   - type: input
     id: version
     attributes:
       label: keyclean version
       description: Run `keyclean --version`.
-      placeholder: keyclean 0.1.0
+      placeholder: keyclean 0.2.0
     validations:
       required: true
   - type: dropdown
@@ -74,6 +84,12 @@ body:
     attributes:
       label: Media/system key results
       description: Optional. Note which keys you tested and what happened.
+  - type: input
+    id: accessibility
+    attributes:
+      label: Accessibility entry
+      description: Safe Mode should need none. For Full Lock, note which app appears in Accessibility.
+      placeholder: None, or KeyClean Full Lock
   - type: textarea
     id: notes
     attributes:
