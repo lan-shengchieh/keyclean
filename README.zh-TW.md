@@ -34,8 +34,7 @@ brew install lan-shengchieh/tap/keyclean
 keyclean
 ```
 
-在 v0.2.0 正式建立 tag 前，tap 的穩定版仍是 v0.1.0。若要先測試 v0.2
-原始碼建置，可使用：
+若要測試最新開發分支而非穩定版本，可使用：
 
 ```sh
 brew install --HEAD lan-shengchieh/tap/keyclean

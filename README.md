@@ -36,8 +36,7 @@ Start permission-free Safe Mode:
 keyclean
 ```
 
-The current tap continues to serve v0.1.0 until v0.2.0 is tagged. To test the
-v0.2 source build before that release, use:
+To test the latest development branch instead of the stable release, use:
 
 ```sh
 brew install --HEAD lan-shengchieh/tap/keyclean
